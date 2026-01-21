@@ -1,0 +1,245 @@
+﻿<Window x:Class="MusicWidget.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dynamic Island" 
+        Height="160" Width="300"
+        WindowStyle="None" 
+        AllowsTransparency="True" 
+        Background="Transparent"
+        Topmost="True" 
+        ShowInTaskbar="False"
+        UseLayoutRounding="True" 
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <!-- 
+            【系统主题色修改指南】
+            将原来的 #00D1FF 替换为 {x:Static SystemParameters.WindowGlassBrush}
+            这代表 Windows 的“窗口边框色”或“强调色”。
+        -->
+
+        <!-- 迷你进度条样式 -->
+        <Style x:Key="MiniProgressStyle" TargetType="ProgressBar">
+            <Setter Property="Height" Value="3"/>
+            <Setter Property="Foreground" Value="{x:Static SystemParameters.WindowGlassBrush}"/>
+            <!-- 跟随系统 -->
+            <Setter Property="Background" Value="#20FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid x:Name="TemplateRoot">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="1.5"/>
+                            <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                <Border Background="{TemplateBinding Foreground}" CornerRadius="1.5"/>
+                            </Decorator>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 主进度条样式 -->
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="4"/>
+            <Setter Property="Foreground" Value="{x:Static SystemParameters.WindowGlassBrush}"/>
+            <!-- 跟随系统 -->
+            <Setter Property="Background" Value="#40FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid x:Name="TemplateRoot">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="2"/>
+                            <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left">
+                                <Border Background="{TemplateBinding Foreground}" CornerRadius="2"/>
+                            </Decorator>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 按钮样式 -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <!-- 鼠标悬停时，按钮变色为系统主题色 -->
+                    <Setter Property="Foreground" Value="{x:Static SystemParameters.WindowGlassBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 动画资源 (保持不变) -->
+        <Storyboard x:Key="AnimExpand">
+            <DoubleAnimation Storyboard.TargetName="MainBorder" Storyboard.TargetProperty="Height" To="140" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="ControlsPanel" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.3" BeginTime="0:0:0.1"/>
+            <DoubleAnimation Storyboard.TargetName="PbMini" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
+        </Storyboard>
+        <Storyboard x:Key="AnimCollapse">
+            <DoubleAnimation Storyboard.TargetName="ControlsPanel" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.1"/>
+            <DoubleAnimation Storyboard.TargetName="MainBorder" Storyboard.TargetProperty="Height" To="50" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="PbMini" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.3" BeginTime="0:0:0.2"/>
+        </Storyboard>
+        <Storyboard x:Key="AnimShow">
+            <DoubleAnimation Storyboard.TargetName="WindowTransform" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="MainBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4"/>
+        </Storyboard>
+        <Storyboard x:Key="AnimHide">
+            <DoubleAnimation Storyboard.TargetName="WindowTransform" Storyboard.TargetProperty="Y" To="-160" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseIn"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="MainBorder" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.4"/>
+        </Storyboard>
+    </Window.Resources>
+
+    <!-- 主边框 -->
+    <Border x:Name="MainBorder"
+            Height="50" Width="280"
+            CornerRadius="25" 
+            Background="#F2000000"
+            BorderBrush="#33FFFFFF" BorderThickness="1"
+            HorizontalAlignment="Center" VerticalAlignment="Top"
+            MouseLeftButtonDown="MainBorder_MouseLeftButtonDown">
+
+        <Border.RenderTransform>
+            <TranslateTransform x:Name="WindowTransform" Y="-160"/>
+        </Border.RenderTransform>
+
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="5" Opacity="0.5"/>
+        </Border.Effect>
+
+        <Grid>
+            <!-- 内容 Grid (Margin=6) -->
+            <Grid Margin="6">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="38"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 头部信息 -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 封面 -->
+                    <Border Grid.Column="0" Width="38" Height="38" CornerRadius="19">
+                        <Border.Clip>
+                            <EllipseGeometry Center="19,19" RadiusX="19" RadiusY="19"/>
+                        </Border.Clip>
+                        <Image x:Name="ImgCover" Stretch="UniformToFill"/>
+                    </Border>
+
+                    <!-- 文本信息 -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                        <Grid x:Name="TitleContainer" Height="22" ClipToBounds="True">
+                            <Canvas VerticalAlignment="Center" Height="22">
+                                <TextBlock x:Name="TxtTitle" 
+                                           Text="Dynamic Island" 
+                                           Foreground="White" 
+                                           FontFamily="Segoe UI"
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Canvas.Left="0" 
+                                           Canvas.Top="0"
+                                           TextOptions.TextFormattingMode="Display"
+                                           TextOptions.TextRenderingMode="ClearType"
+                                           SnapsToDevicePixels="True">
+                                    <TextBlock.RenderTransform>
+                                        <TranslateTransform x:Name="TitleTransform" X="0"/>
+                                    </TextBlock.RenderTransform>
+                                </TextBlock>
+                            </Canvas>
+                        </Grid>
+                        <TextBlock x:Name="TxtArtist" Text="Click to expand" Foreground="#99FFFFFF" FontSize="11" TextTrimming="CharacterEllipsis"
+                                   TextOptions.TextFormattingMode="Display"
+                                   TextOptions.TextRenderingMode="ClearType"/>
+                    </StackPanel>
+
+                    <!-- 固定图标：颜色也跟随系统 -->
+                    <TextBlock x:Name="TxtPinned" Grid.Column="2" Text="📌" 
+                               Foreground="{x:Static SystemParameters.WindowGlassBrush}" 
+                               FontSize="12" 
+                               VerticalAlignment="Center" Margin="0,0,10,0" Visibility="Collapsed"/>
+                </Grid>
+
+                <!-- 控制面板 -->
+                <Grid x:Name="ControlsPanel" Grid.Row="1" Opacity="0" Margin="10,15,10,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 进度条区域 -->
+                    <Grid Grid.Row="0" Margin="0,0,0,15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ProgressBar x:Name="PbProgress" Grid.Row="0" Value="0" Maximum="100" Height="4" VerticalAlignment="Center"/>
+
+                        <Grid Grid.Row="1" Margin="0,6,0,0">
+                            <TextBlock x:Name="TxtCurrentTime" Text="00:00" Foreground="#99FFFFFF" FontSize="11" FontFamily="Segoe UI" HorizontalAlignment="Left"/>
+                            <TextBlock x:Name="TxtTotalTime" Text="00:00" Foreground="#66FFFFFF" FontSize="11" FontFamily="Segoe UI" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- 按钮组 -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="&#xE892;" Width="40" Height="40" FontFamily="Segoe MDL2 Assets" Click="BtnPrev_Click"/>
+                        <Button x:Name="BtnPlayPause" 
+                                Content="&#xE768;" 
+                                Width="50" Height="50" 
+                                FontSize="22" 
+                                FontFamily="Segoe MDL2 Assets" 
+                                Margin="20,0" 
+                                Click="BtnPlayPause_Click"/>
+                        <Button Content="&#xE893;" Width="40" Height="40" FontFamily="Segoe MDL2 Assets" Click="BtnNext_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <!-- 迷你进度条 -->
+            <ProgressBar x:Name="PbMini"
+                         Style="{StaticResource MiniProgressStyle}"
+                         VerticalAlignment="Bottom"
+                         Margin="30,0,30,2" 
+                         Value="0" Maximum="100"/>
+        </Grid>
+    </Border>
+</Window>

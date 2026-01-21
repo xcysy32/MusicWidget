@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<!-- 关键：必须指定 Windows 版本才能调用媒体 API -->
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<PlatformTarget>x64</PlatformTarget>
+		<Authors>$(xcysy32)</Authors>
+		<Copyright>@xcysy32</Copyright>
+	</PropertyGroup>
+
+</Project>
