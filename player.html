@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; }
+        
+        /* 容器定义 */
+        #player {
+            width: 600px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+            opacity: 0; /* 默认隐藏，有歌才显示 */
+            transition: opacity 0.5s ease;
+            backdrop-filter: blur(10px); /* 毛玻璃 */
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 封面 */
+        #cover {
+            width: 160px;
+            height: 160px;
+            border-radius: 15px;
+            object-fit: cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            margin-right: 25px;
+        }
+
+        /* 文字信息 */
+        #info { flex: 1; overflow: hidden; }
+        
+        #title {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #artist {
+            font-size: 22px;
+            color: #ccc;
+        }
+
+        /* 进度条底槽 */
+        #progress-bg {
+            margin-top: 20px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        /* 进度条动画 (假装在动，或者你可以让C#每秒写一次进度) */
+        #progress-bar {
+            height: 100%;
+            background: #00D1FF;
+            width: 0%;
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="player">
+        <img id="cover" src="" onerror="this.style.opacity=0">
+        <div id="info">
+            <div id="title">Waiting...</div>
+            <div id="artist">System Audio</div>
+            <div id="progress-bg">
+                <div id="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastTitle = "";
+
+        function update() {
+            // 读取 C# 生成的 JSON
+            fetch('nowplaying.json')
+                .then(response => response.json())
+                .then(data => {
+                    const player = document.getElementById('player');
+                    
+                    // 如果没在播放，隐藏卡片
+                    if (!data.title || data.title === "") {
+                        player.style.opacity = 0;
+                        return;
+                    }
+
+                    player.style.opacity = 1;
+                    document.getElementById('title').innerText = data.title;
+                    document.getElementById('artist').innerText = data.artist;
+
+                    // 只有切歌时才刷新图片，防止闪烁
+                    if (data.title !== lastTitle) {
+                        const img = document.getElementById('cover');
+                        img.style.opacity = 1;
+                        img.src = data.cover; // 加上时间戳防止缓存
+                        lastTitle = data.title;
+                    }
+                })
+                .catch(err => console.log("等待数据..."));
+        }
+
+        // 每秒刷新一次
+        setInterval(update, 1000);
+    </script>
+</body>
+</html>
